@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Italien Shop - Inscription</title>
+    <style>
+        /* Design Rouge et Blanc */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #fdfdfd; 
+            margin: 0; 
+            padding: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+        }
+        .register-container { 
+            background-color: white; 
+            padding: 40px 25px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 25px rgba(220, 53, 69, 0.1); 
+            width: 90%; 
+            max-width: 400px; 
+            text-align: center; 
+            border-top: 5px solid #dc3545; /* Ligne rouge distinctive */
+        }
+        h1 { 
+            color: #dc3545; 
+            margin-bottom: 5px; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        p { 
+            color: #555; 
+            margin-bottom: 25px; 
+            font-size: 15px; 
+        }
+        input { 
+            width: 100%; 
+            padding: 14px; 
+            margin: 12px 0; 
+            border: 1.5px solid #eee; 
+            border-radius: 10px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #dc3545;
+            background-color: #fffafa;
+        }
+        button { 
+            width: 100%; 
+            padding: 14px; 
+            background-color: #dc3545; 
+            color: white; 
+            border: none; 
+            border-radius: 10px; 
+            font-size: 17px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-top: 20px; 
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #c82333;
+        }
+        button:disabled { 
+            background-color: #e9ecef; 
+            color: #6c757d;
+        }
+        .login-link { 
+            margin-top: 25px; 
+            font-size: 14px; 
+            color: #666;
+        }
+        .login-link a { 
+            color: #dc3545; 
+            text-decoration: none; 
+            font-weight: bold; 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="register-container">
+        <h1>Italien Shop</h1>
+        <p>Créez votre compte client</p>
+        
+        <form id="regForm">
+            <input type="text" id="username" placeholder="Nom d'utilisateur" required>
+            <input type="tel" id="phone" placeholder="Numéro (ex: +243...)" pattern="^\+243[0-9]{9}$" required>
+            <input type="password" id="pass" placeholder="Mot de passe (min 6 car.)" minlength="6" required>
+            <input type="password" id="confirm_pass" placeholder="Confirmer le mot de passe" required>
+            <input type="text" id="inviteCode" placeholder="Code d'invitation (Optionnel)">
+            <button type="submit" id="submitBtn">S'inscrire maintenant</button>
+        </form>
+
+        <div class="login-link">
+            Déjà membre ? <a href="index.html">Se connecter</a>
+        </div>
+    </div>
+
+    <script>
+        // Votre URL Firebase d'origine est conservée
+        const DB_URL = "https://alibaba-f22a0-default-rtdb.firebaseio.com/users";
+
+        window.onload = function() {
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('c');
+            if (code) {
+                const inviteField = document.getElementById('inviteCode');
+                inviteField.value = code.toUpperCase();
+                inviteField.readOnly = true;
+                inviteField.style.backgroundColor = "#fff5f5";
+            }
+        };
+
+        document.getElementById('regForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const phone = document.getElementById('phone').value.replace('+', '').trim();
+            const pass = document.getElementById('pass').value;
+            const confirm = document.getElementById('confirm_pass').value;
+            const inviteCode = document.getElementById('inviteCode').value.toUpperCase().trim();
+
+            if (pass !== confirm) {
+                alert("Les mots de passe ne sont pas identiques !");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = "Traitement...";
+
+            try {
+                const check = await fetch(`${DB_URL}/${phone}.json`);
+                const existing = await check.json();
+
+                if (existing) {
+                    alert("Ce numéro possède déjà un compte Italien Shop !");
+                } else {
+                    const userData = {
+                        username: document.getElementById('username').value,
+                        phone: phone,
+                        password: pass,
+                        referredBy: inviteCode || "DIRECT",
+                        balance: 0,
+                        totalInvested: 0,
+                        vip: "aucun",
+                        date: new Date().toISOString()
+                    };
+
+                    await fetch(`${DB_URL}/${phone}.json`, {
+                        method: 'PUT',
+                        body: JSON.stringify(userData)
+                    });
+
+                    localStorage.setItem('userPhone', phone);
+                    alert("Bienvenue chez Italien Shop !");
+                    window.location.href = "dashboard.html";
+                }
+            } catch (err) {
+                alert("Erreur de connexion. Vérifiez votre signal internet.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "S'inscrire maintenant";
+            }
+        };
+    </script>
+</body>
+</html>
