@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Italie Shop | Mes Investissements</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { background: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
+        /* Thème Italie Shop : Rouge */
+        .card-active { background: white; border-radius: 20px; border-left: 5px solid #dc3545; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; }
+        .btn-collect { background: linear-gradient(90deg, #dc3545, #b02a37); color: white; border-radius: 12px; transition: 0.3s; }
+        .btn-collect:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; transform: none; }
+        .progress-bar { background: #eee; border-radius: 10px; height: 8px; overflow: hidden; }
+        .progress-fill { background: #dc3545; height: 100%; transition: 1s linear; width: 0%; } 
+        .product-img-header { width: 100%; height: 120px; object-cover: cover; }
+    </style>
+</head>
+<body class="pb-32">
+
+    <div class="bg-white p-5 flex items-center shadow-sm sticky top-0 z-50">
+        <a href="produit.html" class="text-slate-400 mr-4 active:scale-90 transition-transform">
+            <i class="fa-solid fa-arrow-left text-xl"></i>
+        </a>
+        <h1 class="text-lg font-black text-slate-800 uppercase tracking-tight">Mes Investissements</h1>
+    </div>
+
+    <div class="px-5 mt-6">
+        <div class="bg-[#dc3545] p-6 rounded-[2rem] text-white shadow-xl flex justify-between items-center">
+            <div>
+                <p class="text-[10px] uppercase font-bold opacity-80">Revenu Journalier</p>
+                <p id="profitDisplay" class="text-2xl font-black">FC 0.00</p>
+            </div>
+            <i class="fa-solid fa-clock-rotate-left text-4xl opacity-30"></i>
+        </div>
+    </div>
+
+    <!-- Conteneur des produits achetés -->
+    <div id="activeProductsContainer" class="px-5 mt-8 space-y-5">
+        <div id="emptyMessage" class="text-center py-24">
+            <p class="text-slate-400 font-bold text-sm">Chargement de votre investissement...</p>
+        </div>
+    </div>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-white p-4 flex justify-around items-center z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+        <a href="dashboard.html" class="flex flex-col items-center text-slate-300"><i class="fa-solid fa-house text-xl"></i></a>
+        <a href="produit.html" class="flex flex-col items-center text-[#dc3545]"><i class="fa-solid fa-bag-shopping text-xl"></i></a>
+        <a href="equipe.html" class="flex flex-col items-center text-slate-300"><i class="fa-solid fa-users text-xl"></i></a>
+        <a href="compte.html" class="flex flex-col items-center text-slate-300"><i class="fa-solid fa-user text-xl"></i></a>
+    </nav>
+
+    <script>
+        const DB_URL = "https://alibaba-f22a0-default-rtdb.firebaseio.com/users";
+        const userPhone = localStorage.getItem('userPhone');
+        
+        // Liste des revenus
+        const dailyGains = { 1: 2300, 2: 5200, 3: 13500, 4: 19000, 5: 28000, 6: 42000, 7: 77000, 8: 96000, 9: 148000, 10: 258000, 11: 950000, 12: 1850000, 13: 2500000 };
+
+        // Liste des images correspondantes aux produits Italie Shop (Mêmes images que produit.html)
+        const productImages = {
+            1: "IMG_5323.jpeg", 2: "IMG_5324.jpeg", 3: "IMG_5325.jpeg", 
+            4: "IMG_5326.jpeg", 5: "IMG_5327.jpeg", 6: "IMG_5328.jpeg",
+            7: "IMG_5329.jpeg", 8: "IMG_5330.jpeg", 9: "IMG_5331.jpeg",
+            10: "IMG_5332.jpeg", 11: "IMG_5333.jpeg", 12: "IMG_5334.jpeg", 13: "IMG_5335.jpeg"
+        };
+
+        async function loadMyInvestments() {
+            if (!userPhone) return window.location.href = "index.html";
+
+            try {
+                const res = await fetch(`${DB_URL}/${userPhone}.json`);
+                const user = await res.json();
+
+                if (user && user.vipActive) {
+                    const vipId = user.vipActive;
+                    const gain = dailyGains[vipId];
+                    const img = productImages[vipId] || "IMG_5327.jpeg"; // Image par défaut
+                    const lastCollect = user.lastHarvest || 0; 
+                    
+                    document.getElementById('profitDisplay').innerText = `FC ${gain.toLocaleString()}`;
+                    renderCard(vipId, gain, lastCollect, img);
+                } else {
+                    showEmpty();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function renderCard(id, gain, lastTime, imgSource) {
+            const container = document.getElementById('activeProductsContainer');
+            container.innerHTML = `
+                <div class="card-active">
+                    <img src="${imgSource}" class="product-img-header" alt="Produit">
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-sm font-black text-slate-800 uppercase italic">Italie Pack VIP ${id}</h3>
+                                <p id="statusText" class="text-[10px] font-bold uppercase mt-1 italic text-red-500">Machine en production...</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs font-black text-[#dc3545]">FC ${gain.toLocaleString()}</p>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase">Cycle 24h</p>
+                            </div>
+                        </div>
+                        <div class="progress-bar mb-4"><div id="pBar" class="progress-fill"></div></div>
+                        <button id="btnCollect" onclick="collecterGains(${gain})" disabled class="btn-collect w-full py-4 text-xs font-black uppercase tracking-widest shadow-md">
+                            Initialisation...
+                        </button>
+                    </div>
+                </div>
+            `;
+            startCountdown(lastTime);
+        }
+
+        function startCountdown(lastTime) {
+            const btn = document.getElementById('btnCollect');
+            const status = document.getElementById('statusText');
+            const bar = document.getElementById('pBar');
+            const cycle = 24 * 60 * 60 * 1000; 
+
+            const update = () => {
+                const now = Date.now();
+                const elapsed = now - lastTime;
+                const remaining = cycle - elapsed;
+
+                if (remaining <= 0) {
+                    btn.disabled = false;
+                    btn.innerText = "Collecter mon profit";
+                    status.innerText = "Revenu prêt !";
+                    status.className = "text-[10px] font-bold uppercase mt-1 italic text-green-500";
+                    bar.style.width = "100%";
+                } else {
+                    const h = Math.floor(remaining / 3600000);
+                    const m = Math.floor((remaining % 3600000) / 60000);
+                    const s = Math.floor((remaining % 60000) / 1000);
+                    btn.innerText = `Récolte dans : ${h}h ${m}m ${s}s`;
+                    
+                    const percent = Math.min((elapsed / cycle) * 100, 100);
+                    bar.style.width = percent + "%";
+                    setTimeout(update, 1000);
+                }
+            };
+            update();
+        }
+
+        async function collecterGains(montant) {
+            try {
+                const btn = document.getElementById('btnCollect');
+                btn.disabled = true;
+                btn.innerText = "Encaissement...";
+
+                const res = await fetch(`${DB_URL}/${userPhone}.json`);
+                const user = await res.json();
+                
+                const now = Date.now();
+                if (user.lastHarvest && (now - user.lastHarvest < 24 * 60 * 60 * 1000)) {
+                    alert("Le cycle n'est pas encore terminé.");
+                    return location.reload();
+                }
+
+                const nouveauSolde = (parseFloat(user.balance) || 0) + montant;
+
+                await fetch(`${DB_URL}/${userPhone}.json`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ 
+                        balance: nouveauSolde,
+                        lastHarvest: now 
+                    })
+                });
+
+                alert(`Félicitations ! FC ${montant.toLocaleString()} ajoutés à votre compte.`);
+                window.location.reload(); 
+            } catch (e) { alert("Erreur de connexion"); }
+        }
+
+        function showEmpty() {
+            document.getElementById('activeProductsContainer').innerHTML = `
+                <div class="text-center py-24">
+                    <p class="text-slate-400 font-bold text-sm">Vous n'avez pas encore d'investissement actif.</p>
+                    <a href="produit.html" class="inline-block border border-[#dc3545] text-[#dc3545] px-8 py-3 rounded-xl font-black text-[10px] uppercase mt-6">Acheter un VIP</a>
+                </div>`;
+        }
+
+        window.onload = loadMyInvestments;
+    </script>
+</body>
+</html>
