@@ -8,12 +8,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         body { background: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
-        /* Thème Italie Shop : Dégradé Rouge */
         .btn-retrait { background: linear-gradient(90deg, #dc3545, #b02a37); color: white; }
         .btn-disabled { background: #ccc !important; cursor: not-allowed; opacity: 0.6; }
         .info-box { border-left: 4px solid #dc3545; }
         .status-badge { font-size: 10px; padding: 4px 10px; border-radius: 20px; font-weight: bold; }
-        .outline-italie:focus { outline: 2px solid #dc3545; }
     </style>
 </head>
 <body class="pb-20">
@@ -26,13 +24,11 @@
     </div>
 
     <div class="p-5">
-        <!-- Vérification du Statut VIP -->
         <div id="vipCheckBar" class="bg-white p-4 rounded-2xl shadow-sm mb-4 flex justify-between items-center">
             <span class="text-xs font-bold text-slate-500">Statut de compte :</span>
             <span id="vipStatusBadge" class="status-badge bg-slate-100 text-slate-400 uppercase italic">Vérification...</span>
         </div>
 
-        <!-- Règles et Solde -->
         <div class="bg-white p-4 rounded-2xl shadow-sm mb-6 info-box">
             <h2 class="text-[11px] font-black text-[#dc3545] uppercase mb-2">Règles de retrait Italie Shop</h2>
             <ul class="text-[10px] text-slate-600 space-y-1 font-bold">
@@ -43,7 +39,6 @@
             </ul>
         </div>
 
-        <!-- Formulaire de Retrait -->
         <div id="formContainer" class="bg-white p-6 rounded-3xl shadow-sm">
             <form id="withdrawalForm" class="space-y-6">
                 <div>
@@ -55,7 +50,7 @@
 
                 <div class="bg-slate-50 p-4 rounded-2xl space-y-2">
                     <div class="flex justify-between text-[11px] font-bold text-slate-500">
-                        <span>Frais de retrait (12%) :</span>
+                        <span>Frais (12%) :</span>
                         <span id="feesDisplay">0 FC</span>
                     </div>
                     <div class="flex justify-between text-xs font-black text-slate-800 border-t pt-2">
@@ -68,14 +63,14 @@
                     <label class="text-[10px] font-black uppercase text-slate-400 ml-1">Réseau de réception</label>
                     <select id="network" class="w-full p-4 bg-slate-50 rounded-2xl border-none text-sm font-bold outline-none focus:ring-2 focus:ring-[#dc3545]" required>
                         <option value="">Sélectionner...</option>
-                        <option value="Orange">Orange Money</option>
-                        <option value="Airtel">Airtel Money</option>
-                        <option value="Vodacom">M-Pesa (Vodacom)</option>
+                        <option value="Orange Money">Orange Money</option>
+                        <option value="Airtel Money">Airtel Money</option>
+                        <option value="M-Pesa">M-Pesa (Vodacom)</option>
                     </select>
                 </div>
 
                 <div>
-                    <label class="text-[10px] font-black uppercase text-slate-400 ml-1">Votre Numéro de réception</label>
+                    <label class="text-[10px] font-black uppercase text-slate-400 ml-1">Numéro de réception</label>
                     <input type="tel" id="userPhoneInput" placeholder="Ex: 089..." 
                            class="w-full p-4 bg-slate-50 rounded-2xl border-none text-sm font-bold outline-none focus:ring-2 focus:ring-[#dc3545]" required>
                 </div>
@@ -94,7 +89,6 @@
         const loggedUserPhone = localStorage.getItem('userPhone');
         
         let userCurrentBalance = 0;
-        let isEligible = false;
 
         async function initWithdrawal() {
             if (!loggedUserPhone) return window.location.href = "index.html";
@@ -104,11 +98,10 @@
                 const user = await res.json();
 
                 if (user) {
-                    userCurrentBalance = user.balance || 0;
+                    userCurrentBalance = parseFloat(user.balance) || 0;
                     document.getElementById('currentBalanceDisplay').innerText = `FC ${userCurrentBalance.toLocaleString()}`;
                     
                     if (user.vipActive) {
-                        isEligible = true;
                         document.getElementById('vipStatusBadge').innerText = "Éligible (VIP)";
                         document.getElementById('vipStatusBadge').className = "status-badge bg-green-100 text-green-600 uppercase";
                         checkTime();
@@ -116,14 +109,13 @@
                         lockForm("Achat VIP requis");
                     }
                 }
-            } catch (e) { console.error("Erreur d'initialisation:", e); }
+            } catch (e) { console.error(e); }
         }
 
         function lockForm(msg) {
             const form = document.getElementById('withdrawalForm');
             const btn = document.getElementById('submitBtn');
             const badge = document.getElementById('vipStatusBadge');
-            
             form.classList.add('opacity-40', 'pointer-events-none');
             btn.classList.add('btn-disabled');
             btn.innerText = msg;
@@ -136,7 +128,6 @@
             if (hour < 9 || hour >= 17) {
                 const btn = document.getElementById('submitBtn');
                 btn.classList.add('btn-disabled');
-                btn.disabled = true;
                 document.getElementById('timeStatus').innerHTML = '<span class="text-red-500 text-[10px] font-bold italic">Fermé (Ouvert de 09h à 17h)</span>';
             }
         }
@@ -152,39 +143,42 @@
         document.getElementById('withdrawalForm').onsubmit = async function(e) {
             e.preventDefault();
             const amount = parseFloat(document.getElementById('amount').value);
-            const net = amount - (amount * 0.12);
             const network = document.getElementById('network').value;
-            const phone = document.getElementById('userPhoneInput').value;
+            const receiverPhone = document.getElementById('userPhoneInput').value;
 
             if (amount < 4200) return alert("Le minimum est de 4 200 FC.");
             if (amount > userCurrentBalance) return alert("Solde insuffisant !");
 
-            if (confirm(`Confirmer le retrait de FC ${amount.toLocaleString()} ?\nMontant net : FC ${net.toLocaleString()}`)) {
+            if (confirm(`Retirer FC ${amount.toLocaleString()} ?`)) {
                 try {
+                    // 1. Déduire le solde
                     const nouveauSolde = userCurrentBalance - amount;
                     await fetch(`${DB_URL}/users/${loggedUserPhone}.json`, {
                         method: 'PATCH',
                         body: JSON.stringify({ balance: nouveauSolde })
                     });
 
+                    // 2. Envoyer au dossier 'retraits' (Harmonisé avec l'admin)
                     const requestData = {
-                        user: loggedUserPhone,
-                        amount: amount,
-                        netAmount: net,
-                        network: network,
-                        receiverPhone: phone,
-                        date: new Date().toLocaleString(),
-                        status: "En attente"
+                        phone: loggedUserPhone,
+                        montant: amount,
+                        reseau: network,
+                        expediteur: receiverPhone,
+                        date: new Date().toLocaleString('fr-FR'),
+                        statut: "En attente",
+                        type: "RETRAIT"
                     };
 
-                    await fetch(`${DB_URL}/retraits_en_attente.json`, {
+                    await fetch(`${DB_URL}/retraits.json`, {
                         method: 'POST',
                         body: JSON.stringify(requestData)
                     });
 
-                    alert("Votre demande de retrait Italie Shop a été envoyée !");
+                    alert("Demande de retrait envoyée avec succès !");
                     window.location.href = "compte.html";
-                } catch (e) { alert("Erreur lors de la transaction."); }
+                } catch (e) { 
+                    alert("Erreur de connexion."); 
+                }
             }
         };
 
